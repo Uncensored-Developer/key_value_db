@@ -8,7 +8,7 @@ import (
 func TestInMemoryDB_SetGet(t *testing.T) {
 
 	t.Run("Set a key-value pair", func(t *testing.T) {
-		db := NewInMemoryDb()
+		db := NewInMemoryStorage()
 		key := "key_1"
 		want := "value_1"
 		err := db.Set(key, "value_1")
@@ -27,7 +27,7 @@ func TestInMemoryDB_SetGet(t *testing.T) {
 	})
 
 	t.Run("Update the value of exising key", func(t *testing.T) {
-		db := NewInMemoryDb()
+		db := NewInMemoryStorage()
 		key := "key_1"
 		want := "value_2"
 		err := db.Set(key, "value_1")
@@ -45,7 +45,7 @@ func TestInMemoryDB_SetGet(t *testing.T) {
 	})
 
 	t.Run("Get the value of non-exising key", func(t *testing.T) {
-		db := NewInMemoryDb()
+		db := NewInMemoryStorage()
 		key := "invalid_key"
 		wantErr := KeyNotFoundError{key: key}
 
@@ -65,7 +65,7 @@ func TestInMemoryDB_SetGet(t *testing.T) {
 
 func TestInMemoryDB_Delete(t *testing.T) {
 	t.Run("Delete a non-existing key", func(t *testing.T) {
-		db := NewInMemoryDb()
+		db := NewInMemoryStorage()
 		key := "invalid_key"
 		wantErr := KeyNotFoundError{key: key}
 
@@ -82,7 +82,7 @@ func TestInMemoryDB_Delete(t *testing.T) {
 	})
 
 	t.Run("Delete an existing key", func(t *testing.T) {
-		db := NewInMemoryDb()
+		db := NewInMemoryStorage()
 		key := "key_3"
 		value := "value_3"
 

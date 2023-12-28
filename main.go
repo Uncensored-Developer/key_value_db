@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	keyValueDB := storage.NewInMemoryDb()
+	keyValueDB := storage.NewInMemoryStorage()
 	ui.RunCLI(keyValueDB)
 }

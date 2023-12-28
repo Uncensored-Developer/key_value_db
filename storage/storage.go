@@ -7,7 +7,7 @@ type KeyNotFoundError struct {
 }
 
 func (k *KeyNotFoundError) Error() string {
-	return fmt.Sprintf("Key '%s' not found in storage", k.key)
+	return fmt.Sprintf("Key %q not found in storage", k.key)
 }
 
 // Storage Interface representing the underlying storage of the database
