@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"kvdb/domain"
+	"kvdb/storage"
 	"os"
 	"strings"
 )
 
-func RunCLI() {
+func RunCLI(db storage.Storage) {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
@@ -20,7 +21,18 @@ func RunCLI() {
 			return
 		}
 
-		fmt.Println("You entered: ", input)
+		cmd, err := getCommand(input)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			_, err := cmd.Validate()
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(cmd)
+			}
+		}
+
 	}
 }
 
@@ -56,7 +68,6 @@ func getCommand(input string) (domain.Command, error) {
 					}
 				} else {
 					if strings.HasPrefix(word, "\"") {
-						println("HERE")
 						foundOpeningQuote = true
 						w += word[1:] + " "
 					} else {
@@ -82,6 +93,10 @@ func getCommand(input string) (domain.Command, error) {
 
 	if foundOpeningQuote && !foundClosingQuote {
 		return domain.Command{}, errors.New("(error) ERR Syntax error: arguments has no closing quote")
+	}
+
+	if len(args) > 2 {
+		return domain.Command{}, errors.New("(error) ERR Syntax error")
 	}
 	return domain.NewCommand(keyword, args...), nil
 }

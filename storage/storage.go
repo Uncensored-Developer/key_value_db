@@ -1,4 +1,4 @@
-package database
+package storage
 
 import "fmt"
 
@@ -7,10 +7,11 @@ type KeyNotFoundError struct {
 }
 
 func (k *KeyNotFoundError) Error() string {
-	return fmt.Sprintf("Key '%s' not found in database", k.key)
+	return fmt.Sprintf("Key '%s' not found in storage", k.key)
 }
 
-type Database interface {
+// Storage Interface representing the underlying storage of the database
+type Storage interface {
 	Set(key string, value any) error
 	Get(key string) (any, error)
 	Delete(key string) error

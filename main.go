@@ -1,7 +1,11 @@
 package main
 
-import "kvdb/ui"
+import (
+	"kvdb/storage"
+	"kvdb/ui"
+)
 
 func main() {
-	ui.RunCLI()
+	keyValueDB := storage.NewInMemoryDb()
+	ui.RunCLI(keyValueDB)
 }

@@ -1,4 +1,4 @@
-package database
+package storage
 
 type inMemoryDB struct {
 	db map[string]any
@@ -26,7 +26,7 @@ func (i inMemoryDB) Delete(key string) error {
 	}
 }
 
-func NewInMemoryDb() Database {
+func NewInMemoryDb() Storage {
 	return &inMemoryDB{
 		db: make(map[string]any),
 	}

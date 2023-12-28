@@ -68,15 +68,24 @@ func Test_getCommand(t *testing.T) {
 			want:       domain.Command{},
 			wantErrMsg: "(error) ERR Syntax error: arguments has no closing quote",
 		},
+		{
+			name:       "SET command - syntax error",
+			input:      "SET key value1 value2",
+			want:       domain.Command{},
+			wantErrMsg: "(error) ERR Syntax error",
+		},
+		{
+			name:       "SET command - syntax error - too many arguments",
+			input:      "SET \"multi word key\" \"multi word value1\" \"multi word value2\"",
+			want:       domain.Command{},
+			wantErrMsg: "(error) ERR Syntax error",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
 			got, gotErr := getCommand(tc.input)
-			if got != tc.want {
-				t.Errorf("getCommand(%q) = %v, want %v", tc.input, got, tc.want)
-			}
 
 			if gotErr == nil {
 				// Placeholder for testing nil errors
@@ -84,7 +93,11 @@ func Test_getCommand(t *testing.T) {
 			}
 
 			if gotErr.Error() != tc.wantErrMsg {
-				t.Errorf("getCommand(%q) = %v, want Error %v", tc.input, gotErr, tc.wantErrMsg)
+				t.Fatalf("getCommand(%q) = %v, want Error %v", tc.input, gotErr, tc.wantErrMsg)
+			}
+
+			if got != tc.want {
+				t.Errorf("getCommand(%q) = %v, want %v", tc.input, got, tc.want)
 			}
 		})
 	}
