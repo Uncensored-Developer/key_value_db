@@ -44,7 +44,7 @@ func (k *KeyValueDB) Execute(cmd Command) (DBResult, error) {
 			return DBResult{Value: err.Error(), Type: "integer", Response: "0"}, err
 		}
 		return DBResult{Value: "", Type: "integer", Response: "1"}, nil
-	case INCR:
+	case INCR, INCRBY:
 		result, err := k.storage.Get(cmd.Key)
 		if err != nil {
 			return DBResult{Value: err.Error(), Response: "(nil)"}, err
@@ -53,7 +53,15 @@ func (k *KeyValueDB) Execute(cmd Command) (DBResult, error) {
 		if err != nil {
 			return DBResult{Value: err.Error(), Response: ""}, err
 		}
-		newValue := intValue + 1
+		change := 1
+		if cmd.Keyword == INCRBY {
+			intSetValue, err := convertToInt(cmd.Value)
+			if err != nil {
+				return DBResult{Value: err.Error(), Response: ""}, err
+			}
+			change = intSetValue
+		}
+		newValue := intValue + change
 		err = k.storage.Set(cmd.Key, newValue)
 		if err != nil {
 			return DBResult{Value: err.Error()}, err
