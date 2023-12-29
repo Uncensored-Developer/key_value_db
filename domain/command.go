@@ -3,9 +3,11 @@ package domain
 import "fmt"
 
 const (
-	SET string = "SET"
-	GET string = "GET"
-	DEL string = "DEL"
+	SET    string = "SET"
+	GET    string = "GET"
+	DEL    string = "DEL"
+	INCR   string = "INCR"
+	INCRBY string = "INCRBY"
 )
 
 type CommandError struct {
@@ -50,8 +52,12 @@ func (c Command) Validate() (bool, error) {
 	var keyword string
 
 	switch c.Keyword {
-	case SET:
+	case SET, INCRBY:
 		keyword = SET
+		if c.Keyword == INCRBY {
+			keyword = INCRBY
+		}
+
 		if c.Key == "" {
 			errMsg = fmt.Sprintf(
 				"%s command expected 2 arguments but none was given (i.e no Key & value)", keyword)
@@ -62,11 +68,14 @@ func (c Command) Validate() (bool, error) {
 			return false, &CommandError{msg: errMsg}
 		}
 		return true, nil
-	case GET, DEL:
+	case GET, DEL, INCR:
 		keyword = GET
 		if c.Keyword == DEL {
 			keyword = DEL
+		} else if c.Keyword == INCR {
+			keyword = INCR
 		}
+
 		if c.Key == "" {
 			errMsg = fmt.Sprintf("%s command expected 1 argument but none was given (i.e no Key)", keyword)
 			return false, &CommandError{msg: errMsg}
