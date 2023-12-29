@@ -131,6 +131,18 @@ func TestCommand_Validate(t *testing.T) {
 			wantValidated: true,
 			wantError:     nil,
 		},
+		{
+			name:          "DISCARD command - valid",
+			command:       Command{Keyword: "DISCARD"},
+			wantValidated: true,
+			wantError:     nil,
+		},
+		{
+			name:          "EXEC command - valid",
+			command:       Command{Keyword: "EXEC"},
+			wantValidated: true,
+			wantError:     nil,
+		},
 	}
 
 	for _, tc := range testCases {

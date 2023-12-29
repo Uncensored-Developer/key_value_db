@@ -3,12 +3,14 @@ package domain
 import "fmt"
 
 const (
-	SET    string = "SET"
-	GET    string = "GET"
-	DEL    string = "DEL"
-	INCR   string = "INCR"
-	INCRBY string = "INCRBY"
-	MULTI  string = "MULTI"
+	SET     string = "SET"
+	GET     string = "GET"
+	DEL     string = "DEL"
+	INCR    string = "INCR"
+	INCRBY  string = "INCRBY"
+	MULTI   string = "MULTI"
+	DISCARD string = "DISCARD"
+	EXEC    string = "EXEC"
 )
 
 type CommandError struct {
@@ -86,8 +88,13 @@ func (c Command) Validate() (bool, error) {
 			return false, &CommandError{msg: errMsg}
 		}
 		return true, nil
-	case MULTI:
+	case MULTI, DISCARD, EXEC:
 		keyword = MULTI
+		if c.Keyword == DISCARD {
+			keyword = DISCARD
+		} else if c.Keyword == EXEC {
+			keyword = EXEC
+		}
 		if c.Key != "" {
 			errMsg = fmt.Sprintf("%s command expected no argument but was given", keyword)
 			return false, &CommandError{msg: errMsg}
