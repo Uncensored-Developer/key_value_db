@@ -35,6 +35,9 @@ func RunCLI(db domain.KeyValueDB) {
 			} else {
 				value = result.Response
 			}
+			if result.Type != "" {
+				value = fmt.Sprintf("(%s) %v", result.Type, value)
+			}
 			fmt.Println(value)
 		}
 	}

@@ -16,6 +16,7 @@ func NewKeyValueDB(storage storage.Storage) KeyValueDB {
 
 type DBResult struct {
 	Value    any
+	Type     string
 	Response string
 }
 
@@ -40,9 +41,9 @@ func (k *KeyValueDB) Execute(cmd Command) (DBResult, error) {
 	case DEL:
 		err := k.storage.Delete(cmd.Key)
 		if err != nil {
-			return DBResult{Value: err.Error(), Response: "0"}, err
+			return DBResult{Value: err.Error(), Type: "integer", Response: "0"}, err
 		}
-		return DBResult{Value: "", Response: "1"}, nil
+		return DBResult{Value: "", Type: "integer", Response: "1"}, nil
 	case INCR:
 		result, err := k.storage.Get(cmd.Key)
 		if err != nil {
@@ -57,7 +58,7 @@ func (k *KeyValueDB) Execute(cmd Command) (DBResult, error) {
 		if err != nil {
 			return DBResult{Value: err.Error()}, err
 		}
-		return DBResult{Value: newValue, Response: ""}, nil
+		return DBResult{Value: newValue, Type: "integer", Response: ""}, nil
 	}
 	return DBResult{}, nil
 }
