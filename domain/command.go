@@ -8,6 +8,7 @@ const (
 	DEL    string = "DEL"
 	INCR   string = "INCR"
 	INCRBY string = "INCRBY"
+	MULTI  string = "MULTI"
 )
 
 type CommandError struct {
@@ -82,6 +83,17 @@ func (c Command) Validate() (bool, error) {
 		}
 		if c.Value != nil {
 			errMsg = fmt.Sprintf("%s command expected 1 argument but 2 was given", keyword)
+			return false, &CommandError{msg: errMsg}
+		}
+		return true, nil
+	case MULTI:
+		keyword = MULTI
+		if c.Key != "" {
+			errMsg = fmt.Sprintf("%s command expected no argument but was given", keyword)
+			return false, &CommandError{msg: errMsg}
+		}
+		if c.Value != nil {
+			errMsg = fmt.Sprintf("%s command expected no argument but was given", keyword)
 			return false, &CommandError{msg: errMsg}
 		}
 		return true, nil

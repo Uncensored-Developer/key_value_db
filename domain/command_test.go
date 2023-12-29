@@ -119,6 +119,18 @@ func TestCommand_Validate(t *testing.T) {
 			wantValidated: true,
 			wantError:     nil,
 		},
+		{
+			name:          "MULTI command - Key and value",
+			command:       Command{Keyword: "MULTI", Key: "key_1", Value: "value_1"},
+			wantValidated: false,
+			wantError:     &CommandError{msg: "MULTI command expected no argument but was given"},
+		},
+		{
+			name:          "MULTI command - valid",
+			command:       Command{Keyword: "MULTI"},
+			wantValidated: true,
+			wantError:     nil,
+		},
 	}
 
 	for _, tc := range testCases {
