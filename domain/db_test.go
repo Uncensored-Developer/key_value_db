@@ -103,6 +103,17 @@ func TestKeyValueDB_Execute(t *testing.T) {
 			wantResults: []any{"OK", 15},
 			wantErrMsgs: []string{"", ""},
 		},
+		{
+			name: "Multi",
+			cmds: []Command{
+				NewCommand("MULTI"),
+				NewCommand("SET", "key", "5"),
+				NewCommand("INCR", "key"),
+				NewCommand("INCRBY", "key", "5"),
+			},
+			wantResults: []any{"OK", "QUEUED", "QUEUED", "QUEUED"},
+			wantErrMsgs: []string{"", "", "", ""},
+		},
 	}
 
 	for _, tc := range testCases {

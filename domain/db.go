@@ -7,7 +7,9 @@ import (
 )
 
 type KeyValueDB struct {
-	storage storage.Storage
+	storage            storage.Storage
+	cmdQueue           []Command
+	multiCommandActive bool
 }
 
 func NewKeyValueDB(storage storage.Storage) KeyValueDB {
@@ -24,6 +26,10 @@ func (k *KeyValueDB) Execute(cmd Command) (DBResult, error) {
 	_, err := cmd.Validate()
 	if err != nil {
 		return DBResult{Value: err.Error(), Response: ""}, err
+	}
+	if k.multiCommandActive {
+		k.cmdQueue = append(k.cmdQueue, cmd)
+		return DBResult{Value: "", Response: "QUEUED"}, nil
 	}
 	switch cmd.Keyword {
 	case SET:
@@ -66,7 +72,11 @@ func (k *KeyValueDB) Execute(cmd Command) (DBResult, error) {
 		if err != nil {
 			return DBResult{Value: err.Error()}, err
 		}
+
 		return DBResult{Value: newValue, Type: "integer", Response: ""}, nil
+	case MULTI:
+		k.multiCommandActive = true
+		return DBResult{Value: "", Response: "OK"}, nil
 	}
 	return DBResult{}, nil
 }
