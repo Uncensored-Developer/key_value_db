@@ -1,6 +1,10 @@
 package domain
 
-import "kvdb/storage"
+import (
+	"fmt"
+	"kvdb/storage"
+	"strconv"
+)
 
 type KeyValueDB struct {
 	storage storage.Storage
@@ -39,6 +43,29 @@ func (k *KeyValueDB) Execute(cmd Command) (DBResult, error) {
 			return DBResult{Value: err.Error(), Response: "0"}, err
 		}
 		return DBResult{Value: "", Response: "1"}, nil
+	case INCR:
+		result, err := k.storage.Get(cmd.Key)
+		if err != nil {
+			return DBResult{Value: err.Error(), Response: "(nil)"}, err
+		}
+		intValue, err := convertToInt(result)
+		if err != nil {
+			return DBResult{Value: err.Error(), Response: ""}, err
+		}
+		newValue := intValue + 1
+		err = k.storage.Set(cmd.Key, newValue)
+		if err != nil {
+			return DBResult{Value: err.Error()}, err
+		}
+		return DBResult{Value: newValue, Response: ""}, nil
 	}
 	return DBResult{}, nil
+}
+
+func convertToInt(value any) (int, error) {
+	intValue, err := strconv.Atoi(value.(string))
+	if err != nil {
+		return 0, fmt.Errorf("(error) ERR value is not an integer")
+	}
+	return intValue, nil
 }

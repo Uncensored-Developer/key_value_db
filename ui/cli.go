@@ -25,11 +25,11 @@ func RunCLI(db domain.KeyValueDB) {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			result, _ := db.Execute(cmd)
+			result, err := db.Execute(cmd)
 			value := result.Value
 
 			if result.Response == "" {
-				if isString(result.Value) {
+				if isString(result.Value) && err == nil {
 					value = fmt.Sprintf("%q", result.Value)
 				}
 			} else {

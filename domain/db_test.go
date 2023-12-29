@@ -55,6 +55,30 @@ func TestKeyValueDB_Execute(t *testing.T) {
 			wantResults: []any{"OK", "1"},
 			wantErrMsgs: []string{"", ""},
 		},
+		{
+			name:        "Increase non-existing key",
+			cmds:        []Command{NewCommand("INCR", "non-existing_key")},
+			wantResults: []any{"(nil)"},
+			wantErrMsgs: []string{"Key \"non-existing_key\" not found in storage"},
+		},
+		{
+			name: "Increase non-integer value",
+			cmds: []Command{
+				NewCommand("SET", "key", "abc"),
+				NewCommand("INCR", "key"),
+			},
+			wantResults: []any{"OK", "(error) ERR value is not an integer"},
+			wantErrMsgs: []string{"", "(error) ERR value is not an integer"},
+		},
+		{
+			name: "Increase valid-integer value",
+			cmds: []Command{
+				NewCommand("SET", "key", "10"),
+				NewCommand("INCR", "key"),
+			},
+			wantResults: []any{"OK", 11},
+			wantErrMsgs: []string{"", ""},
+		},
 	}
 
 	for _, tc := range testCases {

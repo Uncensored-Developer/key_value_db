@@ -107,6 +107,12 @@ func TestCommand_Validate(t *testing.T) {
 			wantValidated: true,
 			wantError:     nil,
 		},
+		{
+			name:          "INCR command - valid Key",
+			command:       Command{Keyword: "INCR", Key: "key_1"},
+			wantValidated: true,
+			wantError:     nil,
+		},
 	}
 
 	for _, tc := range testCases {
