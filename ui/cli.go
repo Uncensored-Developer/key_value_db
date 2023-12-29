@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"kvdb/domain"
-	"kvdb/storage"
 	"os"
+	"reflect"
 	"strings"
 )
 
-func RunCLI(db storage.Storage) {
+func RunCLI(db domain.KeyValueDB) {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
@@ -25,14 +25,18 @@ func RunCLI(db storage.Storage) {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			_, err := cmd.Validate()
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(cmd)
-			}
-		}
+			result, _ := db.Execute(cmd)
+			value := result.Value
 
+			if result.Response == "" {
+				if isString(result.Value) {
+					value = fmt.Sprintf("%q", result.Value)
+				}
+			} else {
+				value = result.Response
+			}
+			fmt.Println(value)
+		}
 	}
 }
 
@@ -99,4 +103,8 @@ func getCommand(input string) (domain.Command, error) {
 		return domain.Command{}, errors.New("(error) ERR Syntax error")
 	}
 	return domain.NewCommand(keyword, args...), nil
+}
+
+func isString(obj any) bool {
+	return reflect.TypeOf(obj).Kind() == reflect.String
 }

@@ -22,7 +22,7 @@ func TestKeyValueDB_Execute(t *testing.T) {
 		{
 			name:        "Invalid SET command",
 			cmds:        []Command{NewCommand("SET", "key")},
-			wantResults: []any{""},
+			wantResults: []any{"(error) ERR SET command expected 2 arguments but 1 was given (i.e no value)"},
 			wantErrMsgs: []string{"(error) ERR SET command expected 2 arguments but 1 was given (i.e no value)"},
 		},
 		{
@@ -43,7 +43,7 @@ func TestKeyValueDB_Execute(t *testing.T) {
 		{
 			name:        "Delete non-existing key",
 			cmds:        []Command{NewCommand("DEL", "non-existing_key")},
-			wantResults: []any{0},
+			wantResults: []any{"0"},
 			wantErrMsgs: []string{"Key \"non-existing_key\" not found in storage"},
 		},
 		{
@@ -52,7 +52,7 @@ func TestKeyValueDB_Execute(t *testing.T) {
 				NewCommand("SET", "key", "value"),
 				NewCommand("DEL", "key"),
 			},
-			wantResults: []any{"OK", 1},
+			wantResults: []any{"OK", "1"},
 			wantErrMsgs: []string{"", ""},
 		},
 	}
@@ -75,9 +75,16 @@ func TestKeyValueDB_Execute(t *testing.T) {
 					t.Fatalf("KeyValueDB.Execute(%v) = %v, want Error %v", tc.cmds[i], gotErr, tc.wantErrMsgs[i])
 				}
 
-				if got != tc.wantResults[i] {
-					t.Errorf("KeyValueDB.Execute(%v) = %q, want %q", tc.cmds[i], got, tc.wantResults[i])
+				if got.Response == "" {
+					if got.Value != tc.wantResults[i] {
+						t.Errorf("KeyValueDB.Execute(%v) = %q, want %q", tc.cmds[i], got.Value, tc.wantResults[i])
+					}
+				} else {
+					if got.Response != tc.wantResults[i] {
+						t.Errorf("KeyValueDB.Execute(%v) = %q, want %q", tc.cmds[i], got.Response, tc.wantResults[i])
+					}
 				}
+
 			}
 
 		})

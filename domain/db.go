@@ -10,30 +10,35 @@ func NewKeyValueDB(storage storage.Storage) KeyValueDB {
 	return KeyValueDB{storage: storage}
 }
 
-func (k *KeyValueDB) Execute(cmd Command) (any, error) {
+type DBResult struct {
+	Value    any
+	Response string
+}
+
+func (k *KeyValueDB) Execute(cmd Command) (DBResult, error) {
 	_, err := cmd.Validate()
 	if err != nil {
-		return "", err
+		return DBResult{Value: err.Error(), Response: ""}, err
 	}
 	switch cmd.Keyword {
 	case SET:
 		err := k.storage.Set(cmd.Key, cmd.Value)
 		if err != nil {
-			return "", err
+			return DBResult{Value: err.Error()}, err
 		}
-		return "OK", nil
+		return DBResult{Value: "", Response: "OK"}, nil
 	case GET:
 		result, err := k.storage.Get(cmd.Key)
 		if err != nil {
-			return "(nil)", err
+			return DBResult{Value: err.Error(), Response: "(nil)"}, err
 		}
-		return result, nil
+		return DBResult{Value: result, Response: ""}, nil
 	case DEL:
 		err := k.storage.Delete(cmd.Key)
 		if err != nil {
-			return 0, err
+			return DBResult{Value: err.Error(), Response: "0"}, err
 		}
-		return 1, nil
+		return DBResult{Value: "", Response: "1"}, nil
 	}
-	return "", nil
+	return DBResult{}, nil
 }
