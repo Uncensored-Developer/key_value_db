@@ -113,3 +113,11 @@ func (c Command) Validate() (bool, error) {
 func (c Command) String() string {
 	return fmt.Sprintf("{Keyword: %q, Key: %q, Value: %v}", c.Keyword, c.Key, c.Value)
 }
+
+func (c Command) isExitMultiBlockCmd() bool {
+	switch c.Keyword {
+	case DISCARD, EXEC:
+		return true
+	}
+	return false
+}
