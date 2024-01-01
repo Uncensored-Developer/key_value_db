@@ -15,4 +15,5 @@ type Storage interface {
 	Set(key string, value any) error
 	Get(key string) (any, error)
 	Delete(key string) error
+	FetchAll() <-chan [2]any
 }

@@ -27,6 +27,17 @@ func (i inMemoryStorage) Delete(key string) error {
 	}
 }
 
+func (i inMemoryStorage) FetchAll() <-chan [2]any {
+	outputChan := make(chan [2]any)
+	go func() {
+		for k, v := range i.db {
+			outputChan <- [2]any{k, v}
+		}
+		close(outputChan)
+	}()
+	return outputChan
+}
+
 func NewInMemoryStorage() Storage {
 	return &inMemoryStorage{
 		db: make(map[string]any),

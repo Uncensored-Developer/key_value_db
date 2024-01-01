@@ -5,6 +5,7 @@ import (
 	"kvdb/storage"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 type KeyValueDB struct {
@@ -125,6 +126,27 @@ func (k *KeyValueDB) Execute(cmd Command) any {
 		}
 		k.multiCommandActive = false
 		return k.executeQueuedCmds()
+	case COMPACT:
+		var results []DBResult
+		for kv := range k.storage.FetchAll() {
+			cmdKey := kv[0].(string)
+			value := kv[1]
+
+			if len(strings.Fields(cmdKey)) > 1 {
+				cmdKey = fmt.Sprintf("%q", cmdKey)
+			}
+
+			switch v := value.(type) {
+			case int:
+				value = v
+			case string:
+				value = fmt.Sprintf("%q", value)
+			}
+
+			dbRes := DBResult{Response: fmt.Sprintf("SET %s %v", cmdKey, value)}
+			results = append(results, dbRes)
+		}
+		return results
 	}
 	return DBResult{}
 }

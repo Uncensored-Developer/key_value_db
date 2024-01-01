@@ -208,3 +208,37 @@ func TestKeyValueDB_Execute_ExecCommand(t *testing.T) {
 	}
 
 }
+
+func TestKeyValueDB_Execute_CompactCommand(t *testing.T) {
+	inMemoryStorage := storage.NewInMemoryStorage()
+	db := NewKeyValueDB(inMemoryStorage)
+
+	want := []DBResult{
+		{Response: "SET key1 11"},
+		{Response: "SET key2 \"test us\""},
+		{Response: "SET \"key 3\" \"test 3\""},
+	}
+
+	var cmds []Command = []Command{
+		NewCommand("SET", "key1", "5"),
+		NewCommand("INCR", "key1"),
+		NewCommand("INCRBY", "key1", "5"),
+		NewCommand("SET", "key2", "test us"),
+		NewCommand("SET", "key 3", "test 3"),
+	}
+
+	for _, cmd := range cmds {
+		got := db.Execute(cmd).(DBResult)
+		gotErr := got.Err
+		if gotErr != nil {
+			t.Fatalf("Unexpected error: %v", gotErr)
+		}
+	}
+
+	got := db.Execute(NewCommand("COMPACT")).([]DBResult)
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("EXEC command got %v, want %v", got, want)
+	}
+
+}

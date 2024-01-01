@@ -11,6 +11,7 @@ const (
 	MULTI   string = "MULTI"
 	DISCARD string = "DISCARD"
 	EXEC    string = "EXEC"
+	COMPACT string = "COMPACT"
 )
 
 type CommandError struct {
@@ -88,7 +89,7 @@ func (c Command) Validate() (bool, error) {
 			return false, &CommandError{msg: errMsg}
 		}
 		return true, nil
-	case MULTI, DISCARD, EXEC:
+	case MULTI, DISCARD, EXEC, COMPACT:
 		keyword = MULTI
 		if c.Keyword == DISCARD {
 			keyword = DISCARD
