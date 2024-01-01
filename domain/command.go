@@ -3,11 +3,14 @@ package domain
 import "fmt"
 
 const (
-	SET    string = "SET"
-	GET    string = "GET"
-	DEL    string = "DEL"
-	INCR   string = "INCR"
-	INCRBY string = "INCRBY"
+	SET     string = "SET"
+	GET     string = "GET"
+	DEL     string = "DEL"
+	INCR    string = "INCR"
+	INCRBY  string = "INCRBY"
+	MULTI   string = "MULTI"
+	DISCARD string = "DISCARD"
+	EXEC    string = "EXEC"
 )
 
 type CommandError struct {
@@ -85,6 +88,22 @@ func (c Command) Validate() (bool, error) {
 			return false, &CommandError{msg: errMsg}
 		}
 		return true, nil
+	case MULTI, DISCARD, EXEC:
+		keyword = MULTI
+		if c.Keyword == DISCARD {
+			keyword = DISCARD
+		} else if c.Keyword == EXEC {
+			keyword = EXEC
+		}
+		if c.Key != "" {
+			errMsg = fmt.Sprintf("%s command expected no argument but was given", keyword)
+			return false, &CommandError{msg: errMsg}
+		}
+		if c.Value != nil {
+			errMsg = fmt.Sprintf("%s command expected no argument but was given", keyword)
+			return false, &CommandError{msg: errMsg}
+		}
+		return true, nil
 	}
 	return false, &CommandError{
 		msg: fmt.Sprintf("unknown command %s", c.Keyword),
@@ -93,4 +112,12 @@ func (c Command) Validate() (bool, error) {
 
 func (c Command) String() string {
 	return fmt.Sprintf("{Keyword: %q, Key: %q, Value: %v}", c.Keyword, c.Key, c.Value)
+}
+
+func (c Command) isExitMultiBlockCmd() bool {
+	switch c.Keyword {
+	case DISCARD, EXEC:
+		return true
+	}
+	return false
 }

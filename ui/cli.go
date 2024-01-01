@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"kvdb/domain"
+	"log"
 	"os"
-	"reflect"
 	"strings"
 )
 
@@ -25,20 +25,14 @@ func RunCLI(db domain.KeyValueDB) {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			result, err := db.Execute(cmd)
-			value := result.Value
+			result := db.Execute(cmd)
+			writer := bufio.NewWriter(os.Stdout)
+			PrintDbResult(writer, result)
 
-			if result.Response == "" {
-				if isString(result.Value) && err == nil {
-					value = fmt.Sprintf("%q", result.Value)
-				}
-			} else {
-				value = result.Response
+			err := writer.Flush()
+			if err != nil {
+				log.Fatalf("error flushing buffered writer: %v", err)
 			}
-			if result.Type != "" {
-				value = fmt.Sprintf("(%s) %v", result.Type, value)
-			}
-			fmt.Println(value)
 		}
 	}
 }
@@ -106,8 +100,4 @@ func getCommand(input string) (domain.Command, error) {
 		return domain.Command{}, errors.New("(error) ERR Syntax error")
 	}
 	return domain.NewCommand(keyword, args...), nil
-}
-
-func isString(obj any) bool {
-	return reflect.TypeOf(obj).Kind() == reflect.String
 }
