@@ -56,9 +56,13 @@ func (s *TcpServer) serve(db domain.KeyValueDB) {
 }
 
 func (s *TcpServer) Stop() {
+	fmt.Println("Shutting down server...")
+
 	close(s.shutdown)
 	s.listener.Close()
 	s.wg.Wait() // wait for active connections to complete
+
+	fmt.Println("Server stopped.")
 }
 
 func (s *TcpServer) handleConnection(conn net.Conn, db domain.KeyValueDB) {
@@ -66,7 +70,17 @@ func (s *TcpServer) handleConnection(conn net.Conn, db domain.KeyValueDB) {
 
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
+	dbIndex := 0
 	for {
+		if dbIndex > 0 {
+			fmt.Fprintf(writer, "[%d]>", dbIndex)
+		} else {
+			fmt.Fprintf(writer, ">")
+		}
+		err := writer.Flush()
+		if err != nil {
+			log.Printf("Error flusing buffered writer: %v\n", err)
+		}
 
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -79,12 +93,28 @@ func (s *TcpServer) handleConnection(conn net.Conn, db domain.KeyValueDB) {
 			PrintDbResult(writer, err)
 			break
 		}
-		result := db.Execute(command)
-		PrintDbResult(writer, result)
-		err = writer.Flush()
-		if err != nil {
-			log.Printf("Error flusing buffered writer: %v\n", err)
+		var result any
+		if command.Keyword != domain.DISCONNECT {
+			result = db.Execute(dbIndex, command)
+			dbIndex = getDbIndex(result)
+			PrintDbResult(writer, result)
+		} else {
+			result = fmt.Sprintln("Connection closed.")
+			PrintDbResult(writer, result)
 			return
 		}
+
 	}
+}
+
+func getDbIndex(result any) int {
+	switch res := result.(type) {
+	case []domain.DBResult:
+		if len(res) > 0 {
+			return res[0].DbIndex
+		}
+	case domain.DBResult:
+		return res.DbIndex
+	}
+	return 0
 }

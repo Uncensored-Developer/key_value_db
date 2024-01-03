@@ -12,8 +12,9 @@ func (k *KeyNotFoundError) Error() string {
 
 // Storage Interface representing the underlying storage of the database
 type Storage interface {
-	Set(key string, value any) error
-	Get(key string) (any, error)
-	Delete(key string) error
-	FetchAll() <-chan [2]any
+	Set(dbIndex int, key string, value any) error
+	Get(dbIndex int, key string) (any, error)
+	Delete(dbIndex int, key string) error
+	FetchAll(dbIndex int) <-chan [2]any
+	Select(dbIndex string) (int, error)
 }

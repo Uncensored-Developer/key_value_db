@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
@@ -21,8 +22,14 @@ func main() {
 	}
 
 	port := os.Getenv("TCP_PORT")
+	dbCount := os.Getenv("DB_COUNT")
 
-	inMemoryStorage := storage.NewInMemoryStorage()
+	dbCountInt, err := getIntDbCount(dbCount)
+	if err != nil {
+		log.Fatalf("Error setting DB_COUNT: %v", err)
+	}
+
+	inMemoryStorage := storage.NewInMemoryStorage(dbCountInt)
 	keyValueDB := domain.NewKeyValueDB(inMemoryStorage)
 
 	tcpServer := ui.NewTcpServer(port, keyValueDB)
@@ -32,8 +39,13 @@ func main() {
 
 	<-shutDownSignal
 
-	fmt.Println("Shutting down server...")
 	tcpServer.Stop()
-	fmt.Println("Server stopped.")
+}
 
+func getIntDbCount(dbCountStr string) (int, error) {
+	dbCountInt, err := strconv.Atoi(dbCountStr)
+	if err != nil {
+		return 0, fmt.Errorf("error converting dbCountStr to int: %v", err)
+	}
+	return dbCountInt, nil
 }
