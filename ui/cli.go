@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"kvdb/domain"
-	"log"
 	"os"
 )
 
@@ -26,11 +25,6 @@ func RunCLI(db domain.KeyValueDB) {
 			result := db.Execute(cmd)
 			writer := bufio.NewWriter(os.Stdout)
 			PrintDbResult(writer, result)
-
-			err := writer.Flush()
-			if err != nil {
-				log.Fatalf("error flushing buffered writer: %v", err)
-			}
 		}
 	}
 }

@@ -56,9 +56,13 @@ func (s *TcpServer) serve(db domain.KeyValueDB) {
 }
 
 func (s *TcpServer) Stop() {
+	fmt.Println("Shutting down server...")
+
 	close(s.shutdown)
 	s.listener.Close()
 	s.wg.Wait() // wait for active connections to complete
+
+	fmt.Println("Server stopped.")
 }
 
 func (s *TcpServer) handleConnection(conn net.Conn, db domain.KeyValueDB) {
@@ -79,12 +83,15 @@ func (s *TcpServer) handleConnection(conn net.Conn, db domain.KeyValueDB) {
 			PrintDbResult(writer, err)
 			break
 		}
-		result := db.Execute(command)
-		PrintDbResult(writer, result)
-		err = writer.Flush()
-		if err != nil {
-			log.Printf("Error flusing buffered writer: %v\n", err)
+		var result any
+		if command.Keyword != domain.DISCONNECT {
+			result = db.Execute(command)
+			PrintDbResult(writer, result)
+		} else {
+			result = fmt.Sprintln("Connection closed.")
+			PrintDbResult(writer, result)
 			return
 		}
+
 	}
 }

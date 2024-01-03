@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/joho/godotenv"
 	"kvdb/domain"
 	"kvdb/storage"
@@ -32,8 +31,5 @@ func main() {
 
 	<-shutDownSignal
 
-	fmt.Println("Shutting down server...")
 	tcpServer.Stop()
-	fmt.Println("Server stopped.")
-
 }

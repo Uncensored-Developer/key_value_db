@@ -37,6 +37,11 @@ func PrintDbResult(writer *bufio.Writer, result any) {
 			log.Fatalln(err)
 		}
 	}
+
+	err := writer.Flush()
+	if err != nil {
+		log.Printf("Error flusing buffered writer: %v\n", err)
+	}
 }
 
 // getCommand parses the input string and returns a domain.Command and an error.
