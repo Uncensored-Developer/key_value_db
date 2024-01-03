@@ -139,16 +139,28 @@ func TestKeyValueDB_Execute(t *testing.T) {
 			wantResults: []any{"(error) ERR EXEC without MULTI"},
 			wantErrMsgs: []string{"(error) ERR EXEC without MULTI"},
 		},
+		{
+			name:        "Select - invalid dbIndex",
+			cmds:        []Command{NewCommand("SELECT", "invalid")},
+			wantResults: []any{"(error) ERR value is not an integer or out of range"},
+			wantErrMsgs: []string{"(error) ERR value is not an integer or out of range"},
+		},
+		{
+			name:        "Select - valid dbIndex",
+			cmds:        []Command{NewCommand("SELECT", "2")},
+			wantResults: []any{"OK"},
+			wantErrMsgs: []string{""},
+		},
 	}
 
 	for _, tc := range testCases {
-		inMemoryStorage := storage.NewInMemoryStorage()
+		inMemoryStorage := storage.NewInMemoryStorage(5)
 		db := NewKeyValueDB(inMemoryStorage)
 
 		t.Run(tc.name, func(t *testing.T) {
 
 			for i, cmd := range tc.cmds {
-				got := db.Execute(cmd).(DBResult)
+				got := db.Execute(1, cmd).(DBResult)
 				gotErr := got.Err
 
 				if gotErr == nil {
@@ -177,8 +189,9 @@ func TestKeyValueDB_Execute(t *testing.T) {
 }
 
 func TestKeyValueDB_Execute_ExecCommand(t *testing.T) {
-	inMemoryStorage := storage.NewInMemoryStorage()
+	inMemoryStorage := storage.NewInMemoryStorage(5)
 	db := NewKeyValueDB(inMemoryStorage)
+	dbIndex := 0
 
 	want := []DBResult{
 		{Value: "", Response: "OK"},
@@ -194,14 +207,14 @@ func TestKeyValueDB_Execute_ExecCommand(t *testing.T) {
 	}
 
 	for _, cmd := range cmds {
-		got := db.Execute(cmd).(DBResult)
+		got := db.Execute(dbIndex, cmd).(DBResult)
 		gotErr := got.Err
 		if gotErr != nil {
 			t.Fatalf("Unexpected error: %v", gotErr)
 		}
 	}
 
-	got := db.Execute(NewCommand("EXEC")).([]DBResult)
+	got := db.Execute(dbIndex, NewCommand("EXEC")).([]DBResult)
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("EXEC command got %v, want %v", got, want)
@@ -210,8 +223,9 @@ func TestKeyValueDB_Execute_ExecCommand(t *testing.T) {
 }
 
 func TestKeyValueDB_Execute_CompactCommand(t *testing.T) {
-	inMemoryStorage := storage.NewInMemoryStorage()
+	inMemoryStorage := storage.NewInMemoryStorage(5)
 	db := NewKeyValueDB(inMemoryStorage)
+	dbIndex := 3
 
 	want := []DBResult{
 		{Response: "SET key1 11"},
@@ -228,14 +242,14 @@ func TestKeyValueDB_Execute_CompactCommand(t *testing.T) {
 	}
 
 	for _, cmd := range cmds {
-		got := db.Execute(cmd).(DBResult)
+		got := db.Execute(dbIndex, cmd).(DBResult)
 		gotErr := got.Err
 		if gotErr != nil {
 			t.Fatalf("Unexpected error: %v", gotErr)
 		}
 	}
 
-	got := db.Execute(NewCommand("COMPACT")).([]DBResult)
+	got := db.Execute(dbIndex, NewCommand("COMPACT")).([]DBResult)
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("EXEC command got %v, want %v", got, want)

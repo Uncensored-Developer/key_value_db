@@ -19,6 +19,7 @@ func NewKeyValueDB(storage storage.Storage) KeyValueDB {
 }
 
 type DBResult struct {
+	DbIndex  int
 	Value    any
 	Type     string
 	Response string
@@ -54,7 +55,7 @@ func (d DBResult) String() string {
 	return fmt.Sprintf("{Value: %v, Type: %q, Response: %q, Err: %v}", d.Value, d.Type, d.Response, d.Err)
 }
 
-func (k *KeyValueDB) Execute(cmd Command) any {
+func (k *KeyValueDB) Execute(dbIndex int, cmd Command) any {
 	_, err := cmd.Validate()
 	if err != nil {
 		return DBResult{Value: err.Error(), Response: "", Err: err}
@@ -67,25 +68,25 @@ func (k *KeyValueDB) Execute(cmd Command) any {
 
 	switch cmd.Keyword {
 	case SET:
-		err := k.storage.Set(cmd.Key, cmd.Value)
+		err := k.storage.Set(dbIndex, cmd.Key, cmd.Value)
 		if err != nil {
 			return DBResult{Value: err.Error(), Err: err}
 		}
-		return DBResult{Value: "", Response: "OK"}
+		return DBResult{DbIndex: dbIndex, Value: "", Response: "OK"}
 	case GET:
-		result, err := k.storage.Get(cmd.Key)
+		result, err := k.storage.Get(dbIndex, cmd.Key)
 		if err != nil {
 			return DBResult{Value: err.Error(), Response: "(nil)", Err: err}
 		}
-		return DBResult{Value: result, Response: ""}
+		return DBResult{DbIndex: dbIndex, Value: result, Response: ""}
 	case DEL:
-		err := k.storage.Delete(cmd.Key)
+		err := k.storage.Delete(dbIndex, cmd.Key)
 		if err != nil {
 			return DBResult{Value: err.Error(), Type: "integer", Response: "0", Err: err}
 		}
-		return DBResult{Value: "", Type: "integer", Response: "1"}
+		return DBResult{DbIndex: dbIndex, Value: "", Type: "integer", Response: "1"}
 	case INCR, INCRBY:
-		result, err := k.storage.Get(cmd.Key)
+		result, err := k.storage.Get(dbIndex, cmd.Key)
 		if err != nil {
 			return DBResult{Value: err.Error(), Response: "(nil)", Err: err}
 		}
@@ -102,15 +103,15 @@ func (k *KeyValueDB) Execute(cmd Command) any {
 			change = intSetValue
 		}
 		newValue := intValue + change
-		err = k.storage.Set(cmd.Key, newValue)
+		err = k.storage.Set(dbIndex, cmd.Key, newValue)
 		if err != nil {
 			return DBResult{Value: err.Error(), Err: err}
 		}
 
-		return DBResult{Value: newValue, Type: "integer", Response: ""}
+		return DBResult{DbIndex: dbIndex, Value: newValue, Type: "integer", Response: ""}
 	case MULTI:
 		k.multiCommandActive = true
-		return DBResult{Value: "", Response: "OK"}
+		return DBResult{DbIndex: dbIndex, Value: "", Response: "OK"}
 	case DISCARD:
 		if !k.multiCommandActive {
 			err = &MultiBlockError{cmd: DISCARD}
@@ -118,17 +119,17 @@ func (k *KeyValueDB) Execute(cmd Command) any {
 		}
 		k.multiCommandActive = false
 		k.cmdQueue = nil
-		return DBResult{Value: "", Response: "OK"}
+		return DBResult{DbIndex: dbIndex, Value: "", Response: "OK"}
 	case EXEC:
 		if !k.multiCommandActive {
 			err = &MultiBlockError{cmd: EXEC}
 			return DBResult{Value: err.Error(), Response: "", Err: err}
 		}
 		k.multiCommandActive = false
-		return k.executeQueuedCmds()
+		return k.executeQueuedCmds(dbIndex)
 	case COMPACT:
 		var results []DBResult
-		for kv := range k.storage.FetchAll() {
+		for kv := range k.storage.FetchAll(dbIndex) {
 			cmdKey := kv[0].(string)
 			value := kv[1]
 
@@ -143,10 +144,16 @@ func (k *KeyValueDB) Execute(cmd Command) any {
 				value = fmt.Sprintf("%q", value)
 			}
 
-			dbRes := DBResult{Response: fmt.Sprintf("SET %s %v", cmdKey, value)}
+			dbRes := DBResult{DbIndex: dbIndex, Response: fmt.Sprintf("SET %s %v", cmdKey, value)}
 			results = append(results, dbRes)
 		}
 		return results
+	case SELECT:
+		dbIndex, err := k.storage.Select(cmd.Key)
+		if err != nil {
+			return DBResult{Value: err.Error(), Err: err}
+		}
+		return DBResult{DbIndex: dbIndex, Value: "", Response: "OK"}
 	}
 	return DBResult{}
 }
@@ -155,10 +162,10 @@ func (k *KeyValueDB) Execute(cmd Command) any {
 //
 // It iterates over the cmdQueue and executes each command using the Execute method of KeyValueDB. The results of each execution are stored in the results slice. After executing all the commands, the cmdQueue is set to nil. The function then returns the results slice.
 // Returns []ExecuteReturnValue.
-func (k *KeyValueDB) executeQueuedCmds() []DBResult {
+func (k *KeyValueDB) executeQueuedCmds(dbIndex int) []DBResult {
 	var results []DBResult
 	for _, cmd := range k.cmdQueue {
-		dbRes := k.Execute(cmd)
+		dbRes := k.Execute(dbIndex, cmd)
 		results = append(results, dbRes.(DBResult))
 	}
 	k.cmdQueue = nil

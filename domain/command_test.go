@@ -149,6 +149,24 @@ func TestCommand_Validate(t *testing.T) {
 			wantValidated: true,
 			wantError:     nil,
 		},
+		{
+			name:          "SELECT command - no dbIndex",
+			command:       Command{Keyword: "SELECT"},
+			wantValidated: false,
+			wantError:     &CommandError{msg: "SELECT command expected 1 argument but none was given (i.e no Key)"},
+		},
+		{
+			name:          "SELECT command - invalid number of arguments",
+			command:       Command{Keyword: "SELECT", Key: "0", Value: "1"},
+			wantValidated: false,
+			wantError:     &CommandError{msg: "SELECT command expected 1 argument but 2 was given"},
+		},
+		{
+			name:          "SELECT command - valid index",
+			command:       Command{Keyword: "SELECT", Key: "2"},
+			wantValidated: true,
+			wantError:     nil,
+		},
 	}
 
 	for _, tc := range testCases {

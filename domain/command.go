@@ -13,6 +13,7 @@ const (
 	EXEC       string = "EXEC"
 	COMPACT    string = "COMPACT"
 	DISCONNECT string = "DISCONNECT"
+	SELECT     string = "SELECT"
 )
 
 type CommandError struct {
@@ -73,12 +74,14 @@ func (c Command) Validate() (bool, error) {
 			return false, &CommandError{msg: errMsg}
 		}
 		return true, nil
-	case GET, DEL, INCR:
+	case GET, DEL, INCR, SELECT:
 		keyword = GET
 		if c.Keyword == DEL {
 			keyword = DEL
 		} else if c.Keyword == INCR {
 			keyword = INCR
+		} else if c.Keyword == SELECT {
+			keyword = SELECT
 		}
 
 		if c.Key == "" {

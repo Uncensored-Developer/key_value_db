@@ -22,7 +22,7 @@ func RunCLI(db domain.KeyValueDB) {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			result := db.Execute(cmd)
+			result := db.Execute(0, cmd)
 			writer := bufio.NewWriter(os.Stdout)
 			PrintDbResult(writer, result)
 		}

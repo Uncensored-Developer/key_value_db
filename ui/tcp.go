@@ -70,7 +70,17 @@ func (s *TcpServer) handleConnection(conn net.Conn, db domain.KeyValueDB) {
 
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
+	dbIndex := 0
 	for {
+		if dbIndex > 0 {
+			fmt.Fprintf(writer, "[%d]>", dbIndex)
+		} else {
+			fmt.Fprintf(writer, ">")
+		}
+		err := writer.Flush()
+		if err != nil {
+			log.Printf("Error flusing buffered writer: %v\n", err)
+		}
 
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -85,7 +95,8 @@ func (s *TcpServer) handleConnection(conn net.Conn, db domain.KeyValueDB) {
 		}
 		var result any
 		if command.Keyword != domain.DISCONNECT {
-			result = db.Execute(command)
+			result = db.Execute(dbIndex, command)
+			dbIndex = getDbIndex(result)
 			PrintDbResult(writer, result)
 		} else {
 			result = fmt.Sprintln("Connection closed.")
@@ -94,4 +105,16 @@ func (s *TcpServer) handleConnection(conn net.Conn, db domain.KeyValueDB) {
 		}
 
 	}
+}
+
+func getDbIndex(result any) int {
+	switch res := result.(type) {
+	case []domain.DBResult:
+		if len(res) > 0 {
+			return res[0].DbIndex
+		}
+	case domain.DBResult:
+		return res.DbIndex
+	}
+	return 0
 }
