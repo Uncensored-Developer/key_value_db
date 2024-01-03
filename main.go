@@ -1,13 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	"kvdb/domain"
 	"kvdb/storage"
 	"kvdb/ui"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 )
+
+var shutDownSignal = make(chan os.Signal, 1)
 
 func main() {
 	err := godotenv.Load()
@@ -20,17 +25,15 @@ func main() {
 	inMemoryStorage := storage.NewInMemoryStorage()
 	keyValueDB := domain.NewKeyValueDB(inMemoryStorage)
 
-	listener, err := ui.StartTcpServer(port)
-	if err != nil {
-		log.Fatalf("Failed to startup TCP server: %v\n", err)
-	}
-	defer listener.Close()
+	tcpServer := ui.NewTcpServer(port, keyValueDB)
 
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Fatalf("Failed to accept connection: %v\n", err)
-		}
-		go ui.HandleConnection(conn, keyValueDB)
-	}
+	// Wait for a SIGINT or SIGTERM signal to gracefully shut down the server
+	signal.Notify(shutDownSignal, syscall.SIGINT, syscall.SIGTERM)
+
+	<-shutDownSignal
+
+	fmt.Println("Shutting down server...")
+	tcpServer.Stop()
+	fmt.Println("Server stopped.")
+
 }
